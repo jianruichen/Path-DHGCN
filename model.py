@@ -21,10 +21,7 @@ class HTGCN(nn.Module):#GCN模型
         self.w.bias = torch.nn.Parameter(torch.zeros(dimension).float())
     def forward1(self, args,x, adj):
            x = F.relu(self.gc1(x, adj))#得到经过计算的特征向量
-           adj1 = adj.to_dense()
-           adj1 = torch.matmul(adj1, adj1)
            x = F.dropout(x, self.dropout, training=self.training)#经过丢失率
-           #adj1 = torch.matmul(adj1, adj1)
            x=self.gc2(x,adj1)
            #x = F.dropout(x, self.dropout, training=self.training)  # 经过丢失率
            #x = self.gc3(x, adj1)
@@ -82,8 +79,6 @@ class MLP(nn.Module):
         self.sm = nn.Sigmoid()  # 激活函数
     def forward(self, emb):
         out = self.task2_1(emb)
-        out = self.task2_2(out)
-        out = self.task2_3(out)
        # out = self.task2_4(out)
         out = self.sm(out)  # sigmoid激活，将值映射到【0,1】之间
         return out
