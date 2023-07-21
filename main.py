@@ -108,30 +108,21 @@ def train(epoch):#开始训练
     loss_train_epoch=[]
     train_AUC_epoch=[]
     train_AUC_PR_epoch=[]
-    for t in train_shots:
-       train_adj_time=norm(train_adj_list[t])
-       if args.task=="triangles":
-           node_embedding = model.forward1(args,features, train_adj_time)
-           time_embedding = model.forward2(alltime)
-           all_emb, labels_all,time_emb = features_fusion3(node_embedding, time_embedding, alltime, train_list,train_neg_list)
-       elif args.task == "quads":
-           node_embedding = model.forward1(args,features, train_adj_time)
-           time_embedding = model.forward2(alltime)
-           all_emb, labels_all, time_emb = features_fusion4(node_embedding, time_embedding, alltime,train_list,train_neg_list)
-       elif args.task == "pentagon":
-           node_embedding = model.forward1(args, features, train_adj_time)
-           time_embedding = model.forward2(alltime)
-           all_emb, labels_all, time_emb = features_fusion5(node_embedding, time_embedding, alltime,train_list,train_neg_list)
-       output=discrim(all_emb)
-       loss_train=loss(output,labels_all)
-       loss_train.backward()
-       optimizer.step()
-       optimizer_discrim.step()
-       loss_train_epoch.append(loss_train.item())
-       output=torch.tensor(output)
-       train_AUC,train_AUC_PR=accuracy(labels_all,output)
-       train_AUC_epoch.append(train_AUC)
-       train_AUC_PR_epoch.append(train_AUC_PR)
+    train_adj_time=norm(train_adj_list[t])
+    if args.task=="triangles":
+        node_embedding = model.forward1(args,features, train_adj_time)
+        time_embedding = model.forward2(alltime)
+        all_emb, labels_all,time_emb = features_fusion3(node_embedding, time_embedding, alltime, train_list,train_neg_list)
+    output=discrim(all_emb)
+    loss_train=loss(output,labels_all)
+    loss_train.backward()
+    optimizer.step()
+    optimizer_discrim.step()
+    loss_train_epoch.append(loss_train.item())
+    output=torch.tensor(output)
+    train_AUC,train_AUC_PR=accuracy(labels_all,output)
+    train_AUC_epoch.append(train_AUC)
+    train_AUC_PR_epoch.append(train_AUC_PR)
     model.eval()
     loss_train=np.mean(loss_train_epoch)
     train_AUC=np.mean(train_AUC_epoch)
