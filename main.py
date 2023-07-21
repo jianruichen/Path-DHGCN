@@ -70,33 +70,33 @@ elif args.data == "threads-ask-ubuntu":
 alltime,train_list,train_neg_list,val_list,val_neg_list,test_list,test_neg_list=load_data(args,node)
 #train_adj,val_adj, test_adj=ADJ(args)
 train_adj_list=newdata(args,node)
-features = torch.nn.Embedding(node, 256)  # 初始特征
+features = torch.nn.Embedding(node, 256) 
 features = features.weight
 features = nn.init.xavier_uniform_(features, gain=1)
 # Model and optimizer
-model =HTGCN(nfeat=features.shape[1],#动态高阶时序GCN
+model =HTGCN(nfeat=features.shape[1],
             nhid=args.hidden,
             dropout=args.dropout,
             dimension=64)
-discrim=MLP(dropout=args.dropout)#高阶结构鉴别器
+discrim=MLP(dropout=args.dropout)
 if args.cuda:
     model.cuda()
     discrim.cuda()
     features = features.cuda()
-def loss(output,sign):#损失函数
-    criterion1 = torch.nn.BCELoss()#二元交叉熵损失函数
+def loss(output,sign):
+    criterion1 = torch.nn.BCELoss()
     output = output.squeeze(-1)
     output = output.float()
     sign = sign.float()
-    loss_term = criterion1(output,sign)  # 将预测的与真实值进行损失计算
+    loss_term = criterion1(output,sign) 
     reg_loss = (1 / 2) * (((model.gc1.weight.norm(2)) + (model.gc2.weight.norm(2))+model.w.weight.norm(2)))  # + (model.gc3.weight.norm(2))
     reg_loss = reg_loss * args.weight_decay
     loss_term=loss_term+reg_loss
     return loss_term
 
-def train(epoch):#开始训练
+def train(epoch):
     t = time.time()
-    model.train()#加载训练模型
+    model.train()
     discrim.train()
     optimizer = optim.Adam(model.parameters(),
                            lr=args.lr, weight_decay=args.weight_decay)  # 梯度更新，优化
@@ -139,10 +139,6 @@ def val(node_embedding,time_embedding):
     discrim.eval()
     if args.task == "triangles":
         all_emb_val, labels_all_val, time_emb = features_fusion3(node_embedding, time_embedding, alltime, val_list,val_neg_list)
-    elif args.task == "quads":
-        all_emb_val, labels_all_val, time_emb = features_fusion4(node_embedding, time_embedding, alltime, val_list,val_neg_list)
-    elif args.task == "pentagon":
-        all_emb_val, labels_all_val, time_emb = features_fusion5(node_embedding, time_embedding, alltime, val_list,val_neg_list)
     output_val = discrim(all_emb_val)
     loss_val = loss(output_val, labels_all_val)
     output_val = torch.tensor(output_val)
@@ -158,10 +154,6 @@ def test(node_embedding,time_embedding):
     discrim.eval()
     if args.task == "triangles":
         all_emb_test,labels_test,time_emb = features_fusion3(node_embedding, time_embedding, alltime, test_list,test_neg_list)
-    elif args.task == "quads":
-        all_emb_test, labels_test, time_emb = features_fusion4(node_embedding, time_embedding, alltime, test_list,test_neg_list)
-    elif args.task == "pentagon":
-        all_emb_test, labels_test, time_emb = features_fusion5(node_embedding, time_embedding, alltime, test_list,test_neg_list)
     output_test = discrim(all_emb_test)
     loss_test = loss(output_test, labels_test)
     output_test=torch.tensor(output_test)
@@ -180,7 +172,7 @@ test_auc=[]
 test_auc_pr=[]
 for epoch in range(args.epochs):
     node_embedding, time_embedding = train(epoch)
-    if epoch % 10 == 0:  # 十次测试一次
+    if epoch % 10 == 0: 
         print("[TEST]")
         test_AUC,test_AUC_PR=test(node_embedding,time_embedding)
         val_AUC,val_AUC_PR=val(node_embedding,time_embedding)
