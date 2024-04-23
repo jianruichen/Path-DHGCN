@@ -96,66 +96,40 @@ def normalize_adj(mx):
     r_mat_inv_sqrt = sp.diags(r_inv_sqrt)
     return mx.dot(r_mat_inv_sqrt).transpose().dot(r_mat_inv_sqrt)
 #三阶负样本
-def negative3(triads,times,node):
-    triads=triads.tolist()
+def negative3(triads, times, node):
+    node_list = np.arange(node)
+    np.random.shuffle(node_list)
+    triads = np.array(triads.tolist())
+    neg_a1 = triads[:, 0]
+    neg_a2 = np.random.choice(node_list, size=len(triads))
+    neg_a3 = np.random.choice(node_list, size=len(triads))
+    triads_time_neg = np.random.choice(times, size=len(triads))
+    return list(zip(neg_a1, neg_a2, neg_a3, triads_time_neg))
 
-    node_list = random.sample([i for i in range(0,node)],node)
-    neg_a1 = []
-    neg_a2 = []
-    neg_a3 = []
-    triads_time_neg=[]
-    for i, j in enumerate(triads):
-        b = triads[i]
-        b[1] = choice(node_list)
-        b[2] = choice(node_list)
-        neg_a1.append(b[0])
-        neg_a2.append(b[1])
-        neg_a3.append(b[2])
-        triads_time_neg.append(choice(times))
-    return list(zip(neg_a1,neg_a2,neg_a3,triads_time_neg))
 #四阶负样本
-def negative4(quads,times,node):
-    quads=quads.tolist()
+def negative4(quads, times, node):
+    node_list = np.arange(node)
+    np.random.shuffle(node_list)
+    quads = np.array(quads.tolist())
+    neg_a1 = quads[:, 0]
+    neg_a2 = np.random.choice(node_list, size=len(quads))
+    neg_a3 = np.random.choice(node_list, size=len(quads))
+    neg_a4 = np.random.choice(node_list, size=len(quads))
+    quads_time_neg = np.random.choice(times, size=len(quads))
+    return list(zip(neg_a1, neg_a2, neg_a3, neg_a4, quads_time_neg))
 
-    node_list = [random.randint(0, node-1) for i in range(node)]
-    neg_a1 = []
-    neg_a2 = []
-    neg_a3 = []
-    neg_a4 = []
-    quads_time_neg=[]
-    for i, j in enumerate(quads):
-        b = quads[i]
-        b[1] = choice(node_list)
-        b[2] = choice(node_list)
-        b[3] = choice(node_list)
-        neg_a1.append(b[0])
-        neg_a2.append(b[1])
-        neg_a3.append(b[2])
-        neg_a4.append(b[3])
-        quads_time_neg.append(choice(times))
-    return list(zip(neg_a1,neg_a2,neg_a3,neg_a4,quads_time_neg))
-def negative5(pentogon,times,node):
-    pentogon=pentogon.tolist()
-    node_list = [random.randint(0, node-1) for i in range(node)]
-    neg_a1 = []
-    neg_a2 = []
-    neg_a3 = []
-    neg_a4 = []
-    neg_a5 = []
-    pentogon_time_neg=[]
-    for i, j in enumerate(pentogon):
-        b = pentogon[i]
-        b[1] = choice(node_list)
-        b[2] = choice(node_list)
-        b[3] = choice(node_list)
-        b[4] = choice(node_list)
-        neg_a1.append(b[0])
-        neg_a2.append(b[1])
-        neg_a3.append(b[2])
-        neg_a4.append(b[3])
-        neg_a5.append(b[4])
-        pentogon_time_neg.append(choice(times))
-    return list(zip(neg_a1,neg_a2,neg_a3,neg_a4,neg_a5,pentogon_time_neg))
+def negative5(pentogon, times, node):
+    node_list = np.arange(node)
+    np.random.shuffle(node_list)
+    pentogon = np.array(pentogon.tolist())
+    neg_a1 = pentogon[:, 0]
+    neg_a2 = np.random.choice(node_list, size=len(pentogon))
+    neg_a3 = np.random.choice(node_list, size=len(pentogon))
+    neg_a4 = np.random.choice(node_list, size=len(pentogon))
+    neg_a5 = np.random.choice(node_list, size=len(pentogon))
+    pentogon_time_neg = np.random.choice(times, size=len(pentogon))
+    return list(zip(neg_a1, neg_a2, neg_a3, neg_a4, neg_a5, pentogon_time_neg))
+
 def normalize(mx):#归一化
     """Row-normalize sparse matrix"""
     rowsum = np.array(mx.sum(1))
@@ -172,141 +146,58 @@ def accuracy(test_sign, prediction):#计算精度
     return auc1, AUC_PR
 #三阶特征融合函数
 def features_fusion3(node_embedding,time_embedding,time,edges,neg_edges):
-    p1=list(edges[:,0])
-    p2 = list(edges[:, 1])
-    p3 = list(edges[:, 2])
     ptime=list(edges[:, 3])
-    neg_p1 = list(neg_edges[:, 0])
-    neg_p2 = list(neg_edges[:, 1])
-    neg_p3 = list(neg_edges[:, 2])
-    neg_ptime=list(neg_edges[:, 3])
+    pooles = [list(edges[:, i]) for i in range(4)]
+    neg_pooles = [list(neg_edges[:, i]) for i in range(4)]
     time = [int(i) for i in time]
-    time_dict=dict(zip(time, time_embedding))
-    ptime_emb=[]
-    ptime=[int(i) for i in ptime]
-    for i, j in enumerate(ptime):
-        ptime_emb.append(time_dict[ptime[i]])
-    p1_emb=node_embedding[p1]
-    p2_emb=node_embedding[p2]
-    p3_emb=node_embedding[p3]
-    ptime_emb=torch.tensor([item.cpu().detach().numpy() for item in ptime_emb])
-    pos_all_emb = torch.cat([p1_emb, p2_emb], dim=1)
-    pos_all_emb= torch.cat([pos_all_emb, p3_emb], dim=1)
-    # pos_all_emb3 = torch.add(pos_all_emb2, p1_emb)
-    pos_all_emb = torch.cat([pos_all_emb, ptime_emb], dim=1) / 3
-
-    neg_p1_emb = node_embedding[neg_p1]
-    neg_p2_emb = node_embedding[neg_p2]
-    neg_p3_emb = node_embedding[neg_p3]
-    neg_ptime_emb = []
-    neg_ptime = [int(i) for i in neg_ptime]
-    for i, j in enumerate(neg_ptime):
-        neg_ptime_emb.append(time_dict[neg_ptime[i]])
-    neg_ptime_emb = torch.tensor([item.cpu().detach().numpy() for item in neg_ptime_emb])
-    neg_all_emb = torch.cat([neg_p1_emb, neg_p2_emb], dim=1)
-    neg_all_emb= torch.cat([neg_all_emb, neg_p3_emb], dim=1)
-    neg_all_emb = torch.cat([neg_all_emb, neg_ptime_emb], dim=1) / 3
-
-
-    all_emb=torch.cat([pos_all_emb,neg_all_emb],dim=0)
+    time_dict = dict(zip(time, time_embedding))
+    pooles[3] = [int(i) for i in pooles[3]]
+    ptime_emb = [time_dict[ptime[i]] for i in range(len(pooles[3]))]
+    ptime_emb = torch.tensor([item.cpu().detach().numpy() for item in ptime_emb])
+    for i in range(3):
+        pooles[i] = node_embedding[pooles[i]]
+    for i in range(3):
+        neg_pooles[i] = node_embedding[neg_pooles[i]]
+    pos_all_emb = torch.cat(pooles[:3] + [ptime_emb], dim=1) / 4
+    neg_all_emb = torch.cat(neg_pooles[:3] + [ptime_emb], dim=1) / 4
+    all_emb = torch.cat([pos_all_emb, neg_all_emb], dim=0)
     labels_all = np.hstack([np.ones(len(pos_all_emb)), np.zeros(len(neg_all_emb))])
-
-    labels_all=torch.tensor(labels_all)
-    return all_emb,labels_all,ptime_emb
+    labels_all = torch.tensor(labels_all)
+    return all_emb, labels_all, ptime_emb
 def features_fusion4(node_embedding,time_embedding,time,edges,neg_edges):
-    p1 = list(edges[:, 0])
-    p2 = list(edges[:, 1])
-    p3 = list(edges[:, 2])
-    p4 = list(edges[:, 3])
-    ptime = list(edges[:, 4])
-    neg_p1 = list(neg_edges[:, 0])
-    neg_p2 = list(neg_edges[:, 1])
-    neg_p3 = list(neg_edges[:, 2])
-    neg_p4 = list(neg_edges[:, 3])
-    neg_ptime = list(neg_edges[:, 4])
-    time = [int(i) for i in time]
-    time_dict=dict(zip(time, time_embedding))
-    ptime_emb=[]
-    ptime=[int(i) for i in ptime]
-    for i, j in enumerate(ptime):
-        ptime_emb.append(time_dict[ptime[i]])
-    p1_emb=node_embedding[p1]
-    p2_emb=node_embedding[p2]
-    p3_emb=node_embedding[p3]
-    p4_emb = node_embedding[p4]
-    ptime_emb=torch.tensor([item.cpu().detach().numpy() for item in ptime_emb])
-
-    pos_all_emb1=torch.cat([p1_emb,p2_emb],dim=1)
-    pos_all_emb2=torch.cat([pos_all_emb1,p3_emb],dim=1)
-    pos_all_emb3 = torch.cat([pos_all_emb2,p4_emb],dim=1)
-    pos_all_emb = torch.cat([pos_all_emb3,ptime_emb],dim=1)/4
-    neg_p1_emb = node_embedding[neg_p1]
-    neg_p2_emb = node_embedding[neg_p2]
-    neg_p3_emb = node_embedding[neg_p3]
-    neg_p4_emb = node_embedding[neg_p4]
-    neg_ptime_emb = []
-    neg_ptime = [int(i) for i in neg_ptime]
-    for i, j in enumerate(neg_ptime):
-        neg_ptime_emb.append(time_dict[neg_ptime[i]])
-    neg_ptime_emb = torch.tensor([item.cpu().detach().numpy() for item in neg_ptime_emb])
-    neg_all_emb1 = torch.cat([neg_p1_emb, neg_p2_emb],dim=1)
-    neg_all_emb2 = torch.cat([neg_all_emb1, neg_p3_emb],dim=1)
-    neg_all_emb3 = torch.cat([neg_all_emb2, neg_p4_emb],dim=1)
-    neg_all_emb = torch.cat([neg_all_emb3, neg_ptime_emb],dim=1)/4
-    all_emb=torch.cat([pos_all_emb,neg_all_emb],dim=0)
-    labels_all = np.hstack([np.ones(len(pos_all_emb)), np.zeros(len(neg_all_emb))])
-    labels_all=torch.tensor(labels_all)
-    return all_emb,labels_all,ptime_emb
+    pos_indices = edges[:, :4].tolist()
+    pos_times = edges[:, 4].tolist()
+    neg_indices = neg_edges[:, :4].tolist()
+    neg_times = neg_edges[:, 4].tolist()
+    time = [int(t) for t in time]
+    pos_times = [int(t) for t in pos_times]
+    neg_times = [int(t) for t in neg_times]
+    time_dict = dict(zip(time, time_embedding))
+    pos_time_emb = [time_dict[ptime] for ptime in pos_times]
+    pos_embs = [node_embedding[p_idx] for p_idx in pos_indices]
+    pos_embs.append(torch.tensor(pos_time_emb).cpu().detach().numpy())
+    pos_all_emb = torch.mean(torch.cat(pos_embs, dim=1), dim=1)
+    neg_time_emb = [time_dict[ntime] for ntime in neg_times]
+    neg_embs = [node_embedding[n_idx] for n_idx in neg_indices]
+    neg_embs.append(torch.tensor(neg_time_emb).cpu().detach().numpy())
+    neg_all_emb = torch.mean(torch.cat(neg_embs, dim=1), dim=1)
+    all_emb = torch.cat([pos_all_emb, neg_all_emb], dim=0)
+    labels_all = torch.tensor(np.hstack([np.ones(len(pos_all_emb)), np.zeros(len(neg_all_emb))]))
+    return all_emb, labels_all, torch.tensor(pos_time_emb)
 def features_fusion5(node_embedding,time_embedding,time,edges,neg_edges):
-    p1 = list(edges[:, 0])
-    p2 = list(edges[:, 1])
-    p3 = list(edges[:, 2])
-    p4 = list(edges[:, 3])
-    p5 = list(edges[:, 4])
-    ptime = list(edges[:, 5])
-    neg_p1 = list(neg_edges[:, 0])
-    neg_p2 = list(neg_edges[:, 1])
-    neg_p3 = list(neg_edges[:, 2])
-    neg_p4 = list(neg_edges[:, 3])
-    neg_p5 = list(neg_edges[:, 4])
-    neg_ptime = list(neg_edges[:, 5])
     time = [int(i) for i in time]
-    time_dict=dict(zip(time, time_embedding))
-    ptime_emb=[]
-    ptime=[int(i) for i in ptime]
-    for i, j in enumerate(ptime):
-        ptime_emb.append(time_dict[ptime[i]])
-    p1_emb=node_embedding[p1]
-    p2_emb=node_embedding[p2]
-    p3_emb=node_embedding[p3]
-    p4_emb = node_embedding[p4]
-    p5_emb = node_embedding[p5]
-    ptime_emb=torch.tensor([item.cpu().detach().numpy() for item in ptime_emb])
-    pos_all_emb1=torch.cat([p1_emb,p2_emb],dim=1)
-    pos_all_emb2=torch.cat([pos_all_emb1,p3_emb],dim=1)
-    pos_all_emb3 = torch.cat([pos_all_emb2,p4_emb],dim=1)
-    pos_all_emb4 = torch.cat([pos_all_emb3, p5_emb],dim=1)
-    pos_all_emb = torch.cat([pos_all_emb4,ptime_emb],dim=1)/5
-
-    neg_p1_emb = node_embedding[neg_p1]
-    neg_p2_emb = node_embedding[neg_p2]
-    neg_p3_emb = node_embedding[neg_p3]
-    neg_p4_emb = node_embedding[neg_p4]
-    neg_p5_emb = node_embedding[neg_p5]
-    neg_ptime_emb = []
-    neg_ptime = [int(i) for i in neg_ptime]
-    for i, j in enumerate(neg_ptime):
-        neg_ptime_emb.append(time_dict[neg_ptime[i]])
-    neg_ptime_emb = torch.tensor([item.cpu().detach().numpy() for item in neg_ptime_emb])
-    neg_all_emb1 = torch.cat([neg_p1_emb, neg_p2_emb],dim=1)
-    neg_all_emb2 = torch.cat([neg_all_emb1, neg_p3_emb],dim=1)
-    neg_all_emb3 = torch.cat([neg_all_emb2, neg_p4_emb],dim=1)
-    neg_all_emb4 = torch.cat([neg_all_emb3, neg_p5_emb],dim=1)
-    neg_all_emb = torch.cat([neg_all_emb4, neg_ptime_emb],dim=1)/5
-    all_emb=torch.cat([pos_all_emb,neg_all_emb],dim=0)
-    labels_all = np.hstack([np.ones(len(pos_all_emb)), np.zeros(len(neg_all_emb))])
-    labels_all=torch.tensor(labels_all)
-    return all_emb,labels_all,ptime_emb
+    time_dict = dict(zip(time, time_embedding))
+    # 整合所有节点的embedding
+    node_embs = [node_embedding[np.array(edges[:, i].tolist())] for i in range(5)]
+    ptime_emb = [time_dict[i] for i in map(int, edges[:, 5].tolist())]
+    pos_all_emb = torch.cat(node_embs + [torch.tensor(ptime_emb)], dim=1) / 5
+    # 同样整合所有neg节点的embedding
+    neg_node_embs = [node_embedding[np.array(neg_edges[:, i].tolist())] for i in range(5)]
+    neg_ptime_emb = [time_dict[i] for i in map(int, neg_edges[:, 5].tolist())]
+    neg_all_emb = torch.cat(neg_node_embs + [torch.tensor(neg_ptime_emb)], dim=1) / 5
+    all_emb = torch.cat([pos_all_emb, neg_all_emb], dim=0)
+    labels_all = torch.tensor(np.hstack([np.ones(len(pos_all_emb)), np.zeros(len(neg_all_emb))]))
+    return all_emb, labels_all, ptime_emb
 def process_data3(args,node,data):
     data = data - 1
     p3time = list(data[:, 3])
@@ -365,42 +256,7 @@ def compare_pre_time_adj_train(window_num, node_number,data):  #data是三列信
         adj_list_single = sparse.csr_matrix(contruct_adj1(edge_index_list, node_number))
         adj_list.append(adj_list_single)
     return adj_list,time_length
-def compare_pre_time_adj_val(node_number,data,time_length):  #data是三列信息，节点，节点，时间
-    new_time_list = data[:, -1]
-    time_unique = np.unique(new_time_list) #101个
-    window_num=int(len(data)/time_length)
-    per_scale = np.round(len(time_unique)/window_num)#每个窗口的时间间隔
-    adj_list = []
-    for i in range(window_num):
-        up_raw = time_unique[int(per_scale * i)]
-        if i != window_num-1:
-            down_raw = time_unique[int(per_scale * (i + 1) - 1)]
-            raw_num = np.where((new_time_list >= up_raw) & (new_time_list <= down_raw))
-            edge_index_list = data[raw_num[0], 0:2]
-        else:
-            raw_num = np.where(new_time_list >= up_raw)
-            edge_index_list = data[raw_num[0], 0:2]
-        adj_list_single = sparse.csr_matrix(contruct_adj1(edge_index_list, node_number))
-        adj_list.append(adj_list_single)
-    return adj_list
-def compare_pre_time_adj_test(node_number,data,time_length):  #data是三列信息，节点，节点，时间
-    new_time_list = data[:, -1]
-    time_unique = np.unique(new_time_list) #101个
-    window_num = int(len(data) / time_length)
-    per_scale = np.round(len(time_unique) / window_num)  # 每个窗口的时间间隔
-    adj_list = []
-    for i in range(window_num):
-        up_raw = time_unique[int(per_scale * i)]
-        if i != window_num-1:
-            down_raw = time_unique[int(per_scale * (i + 1) - 1)]
-            raw_num = np.where((new_time_list >= up_raw) & (new_time_list <= down_raw))
-            edge_index_list = data[raw_num[0], 0:2]
-        else:
-            raw_num = np.where(new_time_list >= up_raw)
-            edge_index_list = data[raw_num[0], 0:2]
-        adj_list_single = sparse.csr_matrix(contruct_adj1(edge_index_list, node_number))
-        adj_list.append(adj_list_single)
-    return adj_list
+
 def newdata(args,node):
     train2 = np.loadtxt("../datanew/" + args.data + "/" + args.data + "_2-train.txt")
     adj_train_time,time_length_train = compare_pre_time_adj_train(args.windows, node, train2)
