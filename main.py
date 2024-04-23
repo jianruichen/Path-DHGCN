@@ -102,17 +102,13 @@ def train(epoch):#开始训练
     train_AUC_PR_epoch=[]
     for t in train_shots:
        train_adj_time=norm(train_adj_list[t])
+       node_embedding = model.forward1(args, features, train_adj_time)
+       time_embedding = model.forward2(alltime)
        if args.task=="triangles":
-           node_embedding = model.forward1(args,features, train_adj_time)
-           time_embedding = model.forward2(alltime)
            all_emb, labels_all,time_emb = features_fusion3(node_embedding, time_embedding, alltime, train_list,train_neg_list)
        elif args.task == "quads":
-           node_embedding = model.forward1(args,features, train_adj_time)
-           time_embedding = model.forward2(alltime)
            all_emb, labels_all, time_emb = features_fusion4(node_embedding, time_embedding, alltime,train_list,train_neg_list)
        elif args.task == "pentagon":
-           node_embedding = model.forward1(args, features, train_adj_time)
-           time_embedding = model.forward2(alltime)
            all_emb, labels_all, time_emb = features_fusion5(node_embedding, time_embedding, alltime,train_list,train_neg_list)
        output=discrim(all_emb)
        loss_train=loss(output,labels_all)
