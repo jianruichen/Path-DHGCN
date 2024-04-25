@@ -11,13 +11,13 @@ from pygcn.utils import load_data, norm,accuracy,newdata,features_fusion3,featur
 from pygcn.model import HTGCN,MLP
 import warnings
 warnings.filterwarnings("ignore")
-# Training settings
-parser = argparse.ArgumentParser()#参数
+# Training Parameter settingss
+parser = argparse.ArgumentParser()#
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='Disables CUDA training.')
 parser.add_argument('--fastmode', action='store_true', default=False,
                     help='Validate during training pass.')
-parser.add_argument('--seed', type=int, default=42, help='Random seed.')#随机种子
+parser.add_argument('--seed', type=int, default=42, help='Random seed.')
 parser.add_argument('--epochs', type=int, default=400,
                     help='Number of epochs to train.')
 parser.add_argument('--lr', type=float, default=0.001,
@@ -63,35 +63,35 @@ elif args.data == "threads-ask-ubuntu":
     node = 125602
 alltime,train_list,train_neg_list,val_list,val_neg_list,test_list,test_neg_list=load_data(args,node)
 train_adj_list=newdata(args,node)
-features = torch.nn.Embedding(node, 256)  # 初始特征
+features = torch.nn.Embedding(node, 256)  # Random initialization feature
 features = features.weight
 features = nn.init.xavier_uniform_(features, gain=1)
 # Model and optimizer
-model =HTGCN(nfeat=features.shape[1],#动态高阶时序GCN
+model =HTGCN(nfeat=features.shape[1],#Dynamic higher-order sequential GCN
             nhid=args.hidden,
             dropout=args.dropout,
             dimension=64)
-discrim=MLP(dropout=args.dropout)#高阶结构鉴别器
+discrim=MLP(dropout=args.dropout)#Higher-order structural discriminator
 if args.cuda:
     model.cuda()
     discrim.cuda()
     features = features.cuda()
-def loss(output,sign):#损失函数
-    criterion1 = torch.nn.BCELoss()#二元交叉熵损失函数
+def loss(output,sign):#loss
+    criterion1 = torch.nn.BCELoss()#Binary cross entropy loss function
     output = output.squeeze(-1)
     output = output.float()
     sign = sign.float()
-    loss_term = criterion1(output,sign)  # 将预测的与真实值进行损失计算
+    loss_term = criterion1(output,sign)  
     reg_loss = (1 / 2) * (((model.gc1.weight.norm(2)) + (model.gc2.weight.norm(2))+model.w.weight.norm(2)))  # + (model.gc3.weight.norm(2))
     reg_loss = reg_loss * args.weight_decay
     loss_term=loss_term+reg_loss
     return loss_term
-def train(epoch):#开始训练
+def train(epoch):#Train
     t = time.time()
-    model.train()#加载训练模型
+    model.train()
     discrim.train()
     optimizer = optim.Adam(model.parameters(),
-                           lr=args.lr, weight_decay=args.weight_decay)  # 梯度更新，优化
+                           lr=args.lr, weight_decay=args.weight_decay)  # optimization
     optimizer_discrim = optim.Adam(discrim.parameters(),
                                 lr=args.lr, weight_decay=args.weight_decay)
     optimizer.zero_grad()
@@ -131,7 +131,7 @@ def train(epoch):#开始训练
           'train_AUC_PR: {:.4f}'.format(train_AUC_PR.item()),
           )
     return node_embedding,time_embedding
-def val(node_embedding,time_embedding):
+def val(node_embedding,time_embedding):#Val
     model.eval()
     discrim.eval()
     if args.task == "triangles":
@@ -150,7 +150,7 @@ def val(node_embedding,time_embedding):
           'val_AUC: {:.4f}'.format(val_AUC.item()),
           'val_AUC_PR: {:.4f}'.format(val_AUC_PR.item()))
     return val_AUC,val_AUC_PR
-def test(node_embedding,time_embedding):
+def test(node_embedding,time_embedding):#Test
     model.eval()
     discrim.eval()
     if args.task == "triangles":
