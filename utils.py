@@ -11,14 +11,14 @@ from random import choice
 from scipy import sparse
 
 from torch import nn
-def encode_onehot(labels):#编码
-    classes = set(labels)#类别标签
+def encode_onehot(labels):#encode
+    classes = set(labels)#class label
     classes_dict = {c: np.identity(len(classes))[i, :] for i, c in
                     enumerate(classes)}
     labels_onehot = np.array(list(map(classes_dict.get, labels)),
                              dtype=np.int32)
     return labels_onehot
-#数据加载及处理
+#Load data and Preprocessing
 def load_data(args,node):
     task=args.task
     data=args.data
@@ -71,7 +71,7 @@ def load_data(args,node):
         # 测试集
         test_list5,test_neg_list5= process_data5(args,node,test5)
         return alltime,  train_list5,train_neg_list5,val_list5,val_neg_list5,test_list5,test_neg_list5
-def norm(mx):#归一化
+def norm(mx):#normalization
     """Row-normalize sparse matrix"""
     rowsum = np.array(mx.sum(1))
     r_inv = np.power(rowsum, -1).flatten()
@@ -87,7 +87,7 @@ def sparse_mx_to_torch_sparse_tensor(sparse_mx):
         np.vstack((sparse_mx.row, sparse_mx.col)).astype(np.int64))
     values = torch.from_numpy(sparse_mx.data)
     shape = torch.Size(sparse_mx.shape)
-    return torch.sparse.FloatTensor(indices, values, shape)#将矩阵转换成向量
+    return torch.sparse.FloatTensor(indices, values, shape)
 def normalize_adj(mx):
     """Row-normalize sparse matrix"""
     rowsum = np.array(mx.sum(1))
@@ -95,7 +95,7 @@ def normalize_adj(mx):
     r_inv_sqrt[np.isinf(r_inv_sqrt)] = 0.
     r_mat_inv_sqrt = sp.diags(r_inv_sqrt)
     return mx.dot(r_mat_inv_sqrt).transpose().dot(r_mat_inv_sqrt)
-#三阶负样本
+#3-order negative samples
 def negative3(triads, times, node):
     node_list = np.arange(node)
     np.random.shuffle(node_list)
@@ -106,7 +106,7 @@ def negative3(triads, times, node):
     triads_time_neg = np.random.choice(times, size=len(triads))
     return list(zip(neg_a1, neg_a2, neg_a3, triads_time_neg))
 
-#四阶负样本
+#4-order negative samples
 def negative4(quads, times, node):
     node_list = np.arange(node)
     np.random.shuffle(node_list)
@@ -117,7 +117,7 @@ def negative4(quads, times, node):
     neg_a4 = np.random.choice(node_list, size=len(quads))
     quads_time_neg = np.random.choice(times, size=len(quads))
     return list(zip(neg_a1, neg_a2, neg_a3, neg_a4, quads_time_neg))
-
+#5-order negative samples
 def negative5(pentogon, times, node):
     node_list = np.arange(node)
     np.random.shuffle(node_list)
@@ -130,7 +130,7 @@ def negative5(pentogon, times, node):
     pentogon_time_neg = np.random.choice(times, size=len(pentogon))
     return list(zip(neg_a1, neg_a2, neg_a3, neg_a4, neg_a5, pentogon_time_neg))
 
-def normalize(mx):#归一化
+def normalize(mx):
     """Row-normalize sparse matrix"""
     rowsum = np.array(mx.sum(1))
     r_inv = np.power(rowsum, -1).flatten()
@@ -140,11 +140,10 @@ def normalize(mx):#归一化
     return mx
 def accuracy(test_sign, prediction):#计算精度
     auc1 = roc_auc_score(test_sign, prediction)
-
     precision, recall, thresholds = precision_recall_curve(test_sign, prediction)
     AUC_PR = auc(recall, precision)
     return auc1, AUC_PR
-#三阶特征融合函数
+#3-order feature fusion function
 def features_fusion3(node_embedding,time_embedding,time,edges,neg_edges):
     ptime=list(edges[:, 3])
     pooles = [list(edges[:, i]) for i in range(4)]
@@ -164,6 +163,7 @@ def features_fusion3(node_embedding,time_embedding,time,edges,neg_edges):
     labels_all = np.hstack([np.ones(len(pos_all_emb)), np.zeros(len(neg_all_emb))])
     labels_all = torch.tensor(labels_all)
     return all_emb, labels_all, ptime_emb
+#4-order feature fusion function
 def features_fusion4(node_embedding,time_embedding,time,edges,neg_edges):
     pos_indices = edges[:, :4].tolist()
     pos_times = edges[:, 4].tolist()
@@ -184,6 +184,7 @@ def features_fusion4(node_embedding,time_embedding,time,edges,neg_edges):
     all_emb = torch.cat([pos_all_emb, neg_all_emb], dim=0)
     labels_all = torch.tensor(np.hstack([np.ones(len(pos_all_emb)), np.zeros(len(neg_all_emb))]))
     return all_emb, labels_all, torch.tensor(pos_time_emb)
+#5-order feature fusion function
 def features_fusion5(node_embedding,time_embedding,time,edges,neg_edges):
     time = [int(i) for i in time]
     time_dict = dict(zip(time, time_embedding))
@@ -198,6 +199,7 @@ def features_fusion5(node_embedding,time_embedding,time,edges,neg_edges):
     all_emb = torch.cat([pos_all_emb, neg_all_emb], dim=0)
     labels_all = torch.tensor(np.hstack([np.ones(len(pos_all_emb)), np.zeros(len(neg_all_emb))]))
     return all_emb, labels_all, ptime_emb
+#data processing
 def process_data3(args,node,data):
     data = data - 1
     p3time = list(data[:, 3])
@@ -216,32 +218,17 @@ def process_data4(args,node,data):
     return data,neg_4
 def process_data5(args,node,data):
     data=data-1
-    #五阶
     p5time = list(data[:, 5])
     edges = list(zip(list(data[:, 0]), list(data[:, 1]), list(data[:, 2]), list(data[:, 3]),list(data[:, 4])))
     edges = np.array(edges)
     neg_5 = negative5(edges, p5time, node)
     neg_5 = np.array(neg_5)
     return data,neg_5
-def sparse_mx_to_torch_sparse_tensor(sparse_mx):
-    """Convert a scipy sparse matrix to a torch sparse tensor."""
-    sparse_mx = sparse_mx.tocoo().astype(np.float32)
-    indices = torch.from_numpy(
-        np.vstack((sparse_mx.row, sparse_mx.col)).astype(np.int64))
-    values = torch.from_numpy(sparse_mx.data)
-    shape = torch.Size(sparse_mx.shape)
-    return torch.sparse.FloatTensor(indices, values, shape)#将矩阵转换成向量
-def contruct_adj1(edges, node_num):
-    adj_time = np.zeros(shape=(node_num, node_num))
-    for i in range(edges.shape[0]):
-        # adj_time[int(edges[i, 0]-1), int(edges[i, 1]-1)] = adj_time[int(edges[i, 0]-1), int(edges[i, 1]-1)] + 1
-        adj_time[int(edges[i, 0] - 1), int(edges[i, 1] - 1)] = 1
-        adj_time[int(edges[i, 1] - 1), int(edges[i, 0] - 1)] = 1
-    return adj_time
-def compare_pre_time_adj_train(window_num, node_number,data):  #data是三列信息，节点，节点，时间
+#Construction of Adjacency Matrix for Different Time Windows
+def compare_pre_time_adj_train(window_num, node_number,data): 
     new_time_list = data[:, -1]
     time_unique = np.unique(new_time_list) #101个
-    per_scale = np.round(len(time_unique)/window_num)#每个窗口的时间间隔
+    per_scale = np.round(len(time_unique)/window_num)
     time_length=int(len(data)/window_num)
     adj_list = []
     for i in range(window_num):
@@ -256,7 +243,7 @@ def compare_pre_time_adj_train(window_num, node_number,data):  #data是三列信
         adj_list_single = sparse.csr_matrix(contruct_adj1(edge_index_list, node_number))
         adj_list.append(adj_list_single)
     return adj_list,time_length
-
+#Time data processing
 def newdata(args,node):
     train2 = np.loadtxt("../datanew/" + args.data + "/" + args.data + "_2-train.txt")
     adj_train_time,time_length_train = compare_pre_time_adj_train(args.windows, node, train2)
