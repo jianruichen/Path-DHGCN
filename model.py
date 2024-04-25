@@ -2,7 +2,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from pygcn.layers import GraphConvolution,GraphAttentionLayer
+from layers import GraphConvolution,GraphAttentionLayer
 import scipy.sparse as sp
 
 class HTGCN(nn.Module):#GCN模型
