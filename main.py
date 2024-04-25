@@ -7,8 +7,8 @@ import numpy as np
 import torch
 import torch.optim as optim
 from torch import nn
-from pygcn.utils import load_data, norm,accuracy,newdata,features_fusion3,features_fusion4,features_fusion5
-from pygcn.model import HTGCN,MLP
+from utils import load_data, norm,accuracy,newdata,features_fusion3,features_fusion4,features_fusion5
+from model import HTGCN,MLP
 import warnings
 warnings.filterwarnings("ignore")
 # Training Parameter settingss
