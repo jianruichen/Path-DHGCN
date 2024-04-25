@@ -23,29 +23,29 @@ def load_data(args,node):
     task=args.task
     data=args.data
     if task=="triangles":
-        alltime = np.loadtxt("../datanew/" + args.data + "/" + args.data + "-times.txt")#时刻列表
+        alltime = np.loadtxt("./" + args.data + "/" + args.data + "-times.txt")#时刻列表
         alltime = np.sort(alltime) - 1
         alltime = alltime.tolist()
         alltime = list(set(alltime))
         alltime = np.array(alltime)
         alltime = np.sort(alltime)
         alltime = alltime.tolist()
-        train3 = np.loadtxt("../datanew/"+args.data+"/"+args.data+  "_3-train.txt")
-        val3 = np.loadtxt("../datanew/"+args.data+"/"+args.data+ "_3-vali.txt")
-        test3 = np.loadtxt("../datanew/"+args.data+"/"+args.data+ "_3-test.txt")
+        train3 = np.loadtxt("./"+args.data+"/"+args.data+  "_3-train.txt")
+        val3 = np.loadtxt("./"+args.data+"/"+args.data+ "_3-vali.txt")
+        test3 = np.loadtxt("./"+args.data+"/"+args.data+ "_3-test.txt")
         train_list3,train_neg_list3=process_data3(args,node,train3)
         val_list3,val_neg_list3 = process_data3(args,node, val3)
         test_list3,test_neg_list3 = process_data3(args,node,  test3)
         return alltime, train_list3,train_neg_list3,val_list3,val_neg_list3,test_list3,test_neg_list3
     elif task == "quads":
-        alltime = np.loadtxt("../datanew/" + args.data + "/" + args.data + "-times.txt")
+        alltime = np.loadtxt("./" + args.data + "/" + args.data + "-times.txt")
         alltime = np.sort(alltime) - 1
         alltime = alltime.tolist()
         alltime = list(set(alltime))
 
-        train4 = np.loadtxt("../datanew/"+args.data+"/"+args.data+ "_4-train.txt")
-        val4 = np.loadtxt("../datanew/"+args.data+"/"+args.data+"_4-vali.txt")
-        test4 = np.loadtxt("../datanew/"+args.data+"/"+args.data+"_4-test.txt")
+        train4 = np.loadtxt("./"+args.data+"/"+args.data+ "_4-train.txt")
+        val4 = np.loadtxt("./"+args.data+"/"+args.data+"_4-vali.txt")
+        test4 = np.loadtxt("./"+args.data+"/"+args.data+"_4-test.txt")
         #处理数据
         #训练集
         train_list4,train_neg_list4=process_data4(args,node,train4)
@@ -55,14 +55,14 @@ def load_data(args,node):
         test_list4,test_neg_list4 = process_data4(args,node, test4)
         return alltime, train_list4,train_neg_list4,val_list4,val_neg_list4,test_list4,test_neg_list4
     elif task == "pentagon":
-        alltime = np.loadtxt("../datanew/" + args.data + "/" + args.data + "-times.txt")
+        alltime = np.loadtxt("../" + args.data + "/" + args.data + "-times.txt")
         alltime = np.sort(alltime) - 1
         alltime = alltime.tolist()
         alltime = list(set(alltime))
 
-        train5 = np.loadtxt("../datanew/" + args.data + "/" + args.data + "_5-train.txt")
-        val5 = np.loadtxt("../datanew/" + args.data + "/" + args.data + "_5-vali.txt")
-        test5 = np.loadtxt("../datanew/" + args.data + "/" + args.data + "_5-test.txt")
+        train5 = np.loadtxt("../" + args.data + "/" + args.data + "_5-train.txt")
+        val5 = np.loadtxt("../" + args.data + "/" + args.data + "_5-vali.txt")
+        test5 = np.loadtxt("../" + args.data + "/" + args.data + "_5-test.txt")
         # 处理数据
         # 训练集
         train_list5,train_neg_list5 = process_data5(args,node, train5)
@@ -224,6 +224,13 @@ def process_data5(args,node,data):
     neg_5 = negative5(edges, p5time, node)
     neg_5 = np.array(neg_5)
     return data,neg_5
+def contruct_adj1(edges, node_num):
+    adj_time = np.zeros(shape=(node_num, node_num))
+    for i in range(edges.shape[0]):
+        # adj_time[int(edges[i, 0]-1), int(edges[i, 1]-1)] = adj_time[int(edges[i, 0]-1), int(edges[i, 1]-1)] + 1
+        adj_time[int(edges[i, 0] - 1), int(edges[i, 1] - 1)] = 1
+        adj_time[int(edges[i, 1] - 1), int(edges[i, 0] - 1)] = 1
+    return adj_time
 #Construction of Adjacency Matrix for Different Time Windows
 def compare_pre_time_adj_train(window_num, node_number,data): 
     new_time_list = data[:, -1]
@@ -245,6 +252,6 @@ def compare_pre_time_adj_train(window_num, node_number,data):
     return adj_list,time_length
 #Time data processing
 def newdata(args,node):
-    train2 = np.loadtxt("../datanew/" + args.data + "/" + args.data + "_2-train.txt")
+    train2 = np.loadtxt("./" + args.data + "/" + args.data + "_2-train.txt")
     adj_train_time,time_length_train = compare_pre_time_adj_train(args.windows, node, train2)
     return adj_train_time
